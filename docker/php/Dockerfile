@@ -29,12 +29,8 @@ RUN mkdir -p storage bootstrap/cache \
 # Copy Nginx configuration
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Copy startup script
-COPY docker/start.sh /start.sh
-RUN chmod +x /start.sh
-
 # Expose HTTP port
 EXPOSE 80
 
 # Start PHP-FPM + Nginx
-CMD ["/start.sh"]
+CMD ["sh", "-c", "php-fpm & nginx -g 'daemon off;'"]
