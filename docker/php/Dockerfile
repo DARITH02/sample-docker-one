@@ -1,8 +1,8 @@
-# Base image
 FROM php:8.4-fpm
 
-# Install dependencies
+# Install dependencies and Nginx
 RUN apt-get update && apt-get install -y \
+    nginx \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -15,19 +15,20 @@ RUN apt-get update && apt-get install -y \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www
 
-# Copy Laravel app from src folder
 COPY src/ .
 
-# Ensure storage and bootstrap/cache directories exist
+# Create storage & cache directories
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Expose port
-EXPOSE 9000
+# Copy a default Nginx config
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Run PHP-FPM
-CMD ["php-fpm"]
+# Expose HTTP port
+EXPOSE 80
+
+# Start both PHP-FPM and Nginx
+CMD service nginx start && php-fpm
