@@ -4,7 +4,7 @@ FROM php:8.4-fpm
 # Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
     nginx \
-    gettext \
+    gettext-base \    
     libpng-dev libonig-dev libxml2-dev zip unzip git curl \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
@@ -31,7 +31,10 @@ COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf.template
 # Expose Render’s web port
 EXPOSE 10000
 
-# Start PHP-FPM + Nginx
+# Entrypoint for Render: set port, generate key, run migrations, start PHP-FPM + Nginx
 CMD sh -c "\
     envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && \
+    if [ ! -f /var/www/.env ]; then cp /var/www/.env.example /var/www/.env; fi && \
+    php artisan key:generate --force && \
+    php artisan migrate --force && \
     php-fpm & nginx -g 'daemon off;'"
