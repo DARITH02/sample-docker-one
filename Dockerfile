@@ -4,6 +4,7 @@ FROM php:8.4-fpm
 # Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
     nginx \
+    gettext \
     libpng-dev libonig-dev libxml2-dev zip unzip git curl \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
