@@ -1,5 +1,6 @@
 FROM php:8.4-fpm
 
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     nginx \
     gettext \
@@ -12,28 +13,30 @@ RUN apt-get update && apt-get install -y \
     curl \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Composer
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Set working directory
 WORKDIR /var/www
 
-# Copy Laravel source
-COPY src/ .
+# Copy Laravel source files correctly
+COPY src/. .
 
-# 🔥 THIS WAS MISSING
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Permissions
+# Set permissions
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Nginx config template
+# Copy Nginx config template
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf.template
 
-# Render uses PORT env var
+# Expose port Render uses
 EXPOSE 10000
 
+# Start PHP-FPM + Nginx
 CMD sh -c "\
     envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && \
     php-fpm & nginx -g 'daemon off;'"
